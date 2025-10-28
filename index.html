@@ -347,6 +347,57 @@
         let posts = [];
         let selectedImage = null;
 
+        async function loadUser() {
+            try {
+                const result = await window.storage.get('current_user', false);
+                if (result && result.value) {
+                    currentUser = JSON.parse(result.value);
+                    document.getElementById('authScreen').style.display = 'none';
+                    document.getElementById('mainScreen').style.display = 'block';
+                    loadPosts();
+                }
+            } catch (error) {
+                console.log('Pas de session active');
+            }
+        }
+
+        async function saveUser() {
+            try {
+                await window.storage.set('current_user', JSON.stringify(currentUser), false);
+            } catch (error) {
+                console.error('Erreur sauvegarde utilisateur:', error);
+            }
+        }
+
+        async function loadPosts() {
+            try {
+                const result = await window.storage.list('post:', true);
+                if (result && result.keys) {
+                    const loadedPosts = [];
+                    for (const key of result.keys) {
+                        const postData = await window.storage.get(key, true);
+                        if (postData && postData.value) {
+                            loadedPosts.push(JSON.parse(postData.value));
+                        }
+                    }
+                    posts = loadedPosts.sort((a, b) => b.timestamp - a.timestamp);
+                    renderPosts();
+                }
+            } catch (error) {
+                console.log('Chargement des posts...');
+            }
+        }
+
+        async function savePosts() {
+            for (const post of posts) {
+                try {
+                    await window.storage.set('post:' + post.id, JSON.stringify(post), true);
+                } catch (error) {
+                    console.error('Erreur sauvegarde:', error);
+                }
+            }
+        }
+
         function register() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
@@ -369,8 +420,10 @@
                 id: Date.now()
             };
 
+            saveUser();
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('mainScreen').style.display = 'block';
+            loadPosts();
         }
 
         function previewImage() {
@@ -404,7 +457,7 @@
                 likes: 0,
                 dislikes: 0,
                 votes: {},
-                timestamp: new Date().toISOString()
+                timestamp: Date.now()
             };
 
             posts.unshift(post);
@@ -415,6 +468,7 @@
             document.getElementById('fileLabel').classList.remove('has-file');
             selectedImage = null;
             
+            savePosts();
             renderPosts();
         }
 
@@ -443,6 +497,7 @@
                 }
                 return post;
             });
+            savePosts();
             renderPosts();
         }
 
@@ -491,6 +546,8 @@
         document.getElementById('password').addEventListener('keypress', (e) => {
             if (e.key === 'Enter') register();
         });
+
+        loadUser();
     </script>
 </body>
 </html>
