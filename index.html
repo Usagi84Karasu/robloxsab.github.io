@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Avatar Roblox</title>
+</head>
+<body>
+  <h2>Afficher l’avatar Roblox</h2>
+
+  <input type="text" id="username" placeholder="Entre ton pseudo Roblox">
+  <button onclick="showAvatar()">Voir l’avatar</button>
+
+  <div id="result"></div>
+
+  <script>
+    async function showAvatar() {
+      const username = document.getElementById("username").value.trim();
+      const result = document.getElementById("result");
+      result.innerHTML = "Chargement...";
+
+      try {
+        // 1️⃣ Obtenir l’ID à partir du pseudo
+        const userRes = await fetch(`https://api.roblox.com/users/get-by-username?username=${username}`);
+        const userData = await userRes.json();
+
+        if (!userData.Id) {
+          result.innerHTML = "Utilisateur non trouvé 😢";
+          return;
+        }
+
+        const userId = userData.Id;
+
+        // 2️⃣ Obtenir l’image du profil (avatar headshot ou full-body)
+        const avatarRes = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png`);
+        const avatarData = await avatarRes.json();
+
+        const imageUrl = avatarData.data[0].imageUrl;
+
+        result.innerHTML = `
+          <p><strong>${username}</strong></p>
+          <img src="${imageUrl}" alt="Avatar de ${username}" style="border-radius:10px;">
+        `;
+      } catch (err) {
+        result.innerHTML = "Erreur de chargement 😅";
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>
