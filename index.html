@@ -1,345 +1,592 @@
-import React, { useState, useEffect } from 'react';
-import { ThumbsUp, ThumbsDown, Upload, User } from 'lucide-react';
-
-export default function BrainrotHub() {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [posts, setPosts] = useState([]);
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadUserAndPosts();
-  }, []);
-
-  const loadUserAndPosts = async () => {
-    try {
-      const userResult = await window.storage.get('current_user', false);
-      if (userResult && userResult.value) {
-        setCurrentUser(JSON.parse(userResult.value));
-        await loadPosts();
-      }
-    } catch (error) {
-      console.log('Pas de session');
-    }
-    setLoading(false);
-  };
-
-  const loadPosts = async () => {
-    try {
-      const result = await window.storage.list('post:', true);
-      if (result && result.keys) {
-        const loadedPosts = [];
-        for (const key of result.keys) {
-          const postData = await window.storage.get(key, true);
-          if (postData && postData.value) {
-            loadedPosts.push(JSON.parse(postData.value));
-          }
-        }
-        setPosts(loadedPosts.sort((a, b) => b.timestamp - a.timestamp));
-      }
-    } catch (error) {
-      console.log('Chargement posts...');
-    }
-  };
-
-  const handleRegister = async () => {
-    setError('');
-    
-    if (username.length < 3) {
-      setError('Le pseudo doit contenir au moins 3 caractères');
-      return;
-    }
-    
-    if (password.length < 5) {
-      setError('Le mot de passe doit contenir au moins 5 caractères');
-      return;
-    }
-    
-    const user = { username, id: Date.now() };
-    setCurrentUser(user);
-    
-    try {
-      await window.storage.set('current_user', JSON.stringify(user), false);
-    } catch (error) {
-      console.error('Erreur sauvegarde user:', error);
-    }
-    
-    setUsername('');
-    setPassword('');
-    await loadPosts();
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setSelectedImage(e.target.result);
-        setImagePreview(e.target.result);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const handlePost = async () => {
-    if (!selectedImage) {
-      alert('Veuillez sélectionner une image');
-      return;
-    }
-
-    const post = {
-      id: Date.now(),
-      image: selectedImage,
-      author: currentUser.username,
-      likes: 0,
-      dislikes: 0,
-      votes: {},
-      timestamp: Date.now()
-    };
-
-    const newPosts = [post, ...posts];
-    setPosts(newPosts);
-    
-    try {
-      await window.storage.set('post:' + post.id, JSON.stringify(post), true);
-      
-      // Envoi email en arrière-plan
-      fetch('https://formsubmit.co/ajax/megumikun84@gmail.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify({
-          name: currentUser.username,
-          message: `Nouveau post de ${currentUser.username} sur Brainrot Hub`
-        })
-      }).catch(err => console.log('Email envoyé'));
-      
-    } catch (error) {
-      console.error('Erreur sauvegarde post:', error);
-    }
-    
-    setSelectedImage(null);
-    setImagePreview(null);
-  };
-
-  const handleVote = async (postId, voteType) => {
-    const updatedPosts = posts.map(post => {
-      if (post.id === postId) {
-        const userVote = post.votes[currentUser.id];
-        const newVotes = {...post.votes};
-        let newLikes = post.likes;
-        let newDislikes = post.dislikes;
-
-        if (userVote === voteType) {
-          delete newVotes[currentUser.id];
-          if (voteType === 'like') newLikes--;
-          else newDislikes--;
-        } else {
-          if (userVote === 'like') newLikes--;
-          if (userVote === 'dislike') newDislikes--;
-          
-          newVotes[currentUser.id] = voteType;
-          if (voteType === 'like') newLikes++;
-          else newDislikes++;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainrot Hub</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
-        const updatedPost = {...post, likes: newLikes, dislikes: newDislikes, votes: newVotes};
-        
-        try {
-          window.storage.set('post:' + post.id, JSON.stringify(updatedPost), true);
-        } catch (error) {
-          console.error('Erreur vote:', error);
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: white;
+            color: #333;
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        
-        return updatedPost;
-      }
-      return post;
-    });
-    
-    setPosts(updatedPosts);
-  };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
-        <div className="text-2xl text-gray-400">Chargement...</div>
-      </div>
-    );
-  }
+        .auth-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+            background: white;
+        }
 
-  if (!currentUser) {
-    return (
-      <div className="min-h-screen bg-white flex items-center justify-center p-5">
-        <div className="bg-white p-12 w-full max-w-md border-2 border-gray-200 rounded-2xl">
-          <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold mb-2 bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-              🧠 Brainrot Hub
-            </h1>
-            <p className="text-gray-600">Partage tes meilleurs brainrots</p>
-          </div>
-          
-          <div className="space-y-5">
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">Pseudo</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleRegister()}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-600"
-                placeholder="Minimum 3 caractères"
-              />
+        .auth-box {
+            background: white;
+            padding: 50px;
+            width: 100%;
+            max-width: 450px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+        }
+
+        .auth-box h1 {
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .auth-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .main-screen {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .header {
+            background: white;
+            padding: 25px;
+            border-bottom: 1px solid #f0f0f0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 32px;
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .post-form {
+            background: white;
+            padding: 30px;
+            margin-bottom: 40px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+        }
+
+        .post-form h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            width: 100%;
+            margin-bottom: 15px;
+        }
+
+        .file-input-wrapper input[type="file"] {
+            display: none;
+        }
+
+        .file-input-label {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background: #f0f0f0;
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 16px;
+            color: #666;
+        }
+
+        .file-input-label:hover {
+            background: #e8e8e8;
+            border-color: #667eea;
+        }
+
+        .file-input-label.has-file {
+            background: #e7f3ff;
+            border-color: #667eea;
+            color: #667eea;
+        }
+
+        .image-preview {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            display: none;
+        }
+
+        .post-card {
+            background: white;
+            margin-bottom: 30px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+        }
+
+        .post-header {
+            padding: 20px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .post-avatar {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .post-author {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .post-date {
+            color: #999;
+            font-size: 14px;
+        }
+
+        .post-image {
+            width: 100%;
+            max-height: 600px;
+            object-fit: contain;
+            background: #f5f5f5;
+        }
+
+        .post-actions {
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .vote-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .vote-btn {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .vote-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .vote-btn.liked {
+            background: #4caf50;
+            color: white;
+        }
+
+        .vote-btn.disliked {
+            background: #f44336;
+            color: white;
+        }
+
+        .post-score {
+            font-weight: 600;
+            color: #666;
+            font-size: 16px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #999;
+            font-size: 18px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 100px 20px;
+            font-size: 24px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div id="loadingScreen" class="loading">Chargement...</div>
+
+    <div class="auth-screen hidden" id="authScreen">
+        <div class="auth-box">
+            <h1>🧠 Brainrot Hub</h1>
+            <p>Partage tes meilleurs brainrots</p>
+            
+            <div id="errorMsg" class="error hidden"></div>
+            
+            <div class="input-group">
+                <label>Pseudo</label>
+                <input type="text" id="username" placeholder="Minimum 3 caractères">
             </div>
             
-            <div>
-              <label className="block text-sm font-semibold mb-2 text-gray-700">Mot de passe</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleRegister()}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-purple-600"
-                placeholder="Minimum 5 caractères"
-              />
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" id="password" placeholder="Minimum 5 caractères">
             </div>
             
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-xl text-sm">
-                {error}
-              </div>
-            )}
-            
-            <button
-              onClick={handleRegister}
-              className="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-purple-900 transition-all"
-            >
-              S'inscrire
-            </button>
-          </div>
+            <button class="btn" onclick="register()">S'inscrire</button>
         </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen bg-white">
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-5 py-5">
-          <h1 className="text-3xl font-bold text-center bg-gradient-to-r from-purple-600 to-purple-800 bg-clip-text text-transparent">
-            🧠 Brainrot Hub
-          </h1>
-        </div>
-      </nav>
-
-      <div className="max-w-4xl mx-auto px-5 py-10">
-        <div className="bg-white border-2 border-gray-200 rounded-2xl p-8 mb-10">
-          <h2 className="text-2xl font-bold mb-5 text-gray-800">📸 Poster un brainrot</h2>
-          
-          {imagePreview && (
-            <img 
-              src={imagePreview} 
-              alt="Aperçu" 
-              className="w-full max-h-80 object-contain mb-5 rounded-xl"
-            />
-          )}
-          
-          <div className="mb-5">
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-              id="imageInput"
-            />
-            <label
-              htmlFor="imageInput"
-              className={`block w-full p-4 border-2 border-dashed rounded-xl text-center cursor-pointer transition-all ${
-                imagePreview 
-                  ? 'bg-blue-50 border-purple-600 text-purple-600' 
-                  : 'bg-gray-50 border-gray-300 text-gray-600 hover:bg-gray-100 hover:border-purple-600'
-              }`}
-            >
-              {imagePreview ? '✅ Image sélectionnée' : '📁 Choisir une image'}
-            </label>
-          </div>
-          
-          <button
-            onClick={handlePost}
-            className="w-full bg-gradient-to-r from-purple-600 to-purple-800 text-white font-bold py-3 px-6 rounded-xl hover:from-purple-700 hover:to-purple-900 transition-all"
-          >
-            Publier
-          </button>
-        </div>
-
-        <div className="space-y-8">
-          {posts.length === 0 ? (
-            <div className="text-center py-20 text-gray-400 text-lg">
-              Aucun brainrot pour le moment. Sois le premier à poster ! 🚀
-            </div>
-          ) : (
-            posts.map(post => {
-              const userVote = post.votes[currentUser.id];
-              const date = new Date(post.timestamp).toLocaleDateString('fr-FR');
-              
-              return (
-                <div key={post.id} className="bg-white border-2 border-gray-200 rounded-2xl overflow-hidden">
-                  <div className="p-5 border-b border-gray-200 flex items-center gap-3">
-                    <div className="w-11 h-11 rounded-full bg-gradient-to-r from-purple-600 to-purple-800 flex items-center justify-center text-white font-bold text-lg">
-                      {post.author[0].toUpperCase()}
-                    </div>
-                    <div>
-                      <div className="font-semibold text-gray-800">{post.author}</div>
-                      <div className="text-sm text-gray-500">{date}</div>
-                    </div>
-                  </div>
-                  
-                  <img 
-                    src={post.image} 
-                    alt="Brainrot"
-                    className="w-full max-h-96 object-contain bg-gray-50"
-                  />
-                  
-                  <div className="p-5 flex items-center justify-between">
-                    <div className="flex gap-4">
-                      <button
-                        onClick={() => handleVote(post.id, 'like')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-full font-semibold transition-all ${
-                          userVote === 'like'
-                            ? 'bg-green-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-green-100'
-                        }`}
-                      >
-                        👍 {post.likes}
-                      </button>
-                      
-                      <button
-                        onClick={() => handleVote(post.id, 'dislike')}
-                        className={`flex items-center gap-2 px-5 py-2 rounded-full font-semibold transition-all ${
-                          userVote === 'dislike'
-                            ? 'bg-red-500 text-white'
-                            : 'bg-gray-100 text-gray-700 hover:bg-red-100'
-                        }`}
-                      >
-                        👎 {post.dislikes}
-                      </button>
-                    </div>
-                    
-                    <div className="font-semibold text-gray-600">
-                      Score: {post.likes - post.dislikes}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </div>
     </div>
-  );
-}
+
+    <div class="main-screen hidden" id="mainScreen">
+        <div class="header">
+            <h1>🧠 Brainrot Hub</h1>
+        </div>
+
+        <div class="container">
+            <div class="post-form">
+                <h2>📸 Poster un brainrot</h2>
+                <img id="imagePreview" class="image-preview" alt="Aperçu">
+                <div class="file-input-wrapper">
+                    <input type="file" id="imageFile" accept="image/*" onchange="previewImage()">
+                    <label for="imageFile" class="file-input-label" id="fileLabel">
+                        📁 Choisir une image
+                    </label>
+                </div>
+                <button class="btn" onclick="createPost()">Publier</button>
+            </div>
+
+            <div id="postsContainer"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentUser = null;
+        let posts = [];
+        let selectedImage = null;
+
+        async function init() {
+            await loadUser();
+            document.getElementById('loadingScreen').classList.add('hidden');
+            
+            if (currentUser) {
+                document.getElementById('mainScreen').classList.remove('hidden');
+                await loadPosts();
+            } else {
+                document.getElementById('authScreen').classList.remove('hidden');
+            }
+        }
+
+        async function loadUser() {
+            try {
+                const result = await window.storage.get('current_user', false);
+                if (result && result.value) {
+                    currentUser = JSON.parse(result.value);
+                }
+            } catch (error) {
+                console.log('Pas de session');
+            }
+        }
+
+        async function saveUser() {
+            try {
+                await window.storage.set('current_user', JSON.stringify(currentUser), false);
+            } catch (error) {
+                console.error('Erreur sauvegarde utilisateur:', error);
+            }
+        }
+
+        async function loadPosts() {
+            try {
+                const result = await window.storage.list('post:', true);
+                if (result && result.keys) {
+                    const loadedPosts = [];
+                    for (const key of result.keys) {
+                        try {
+                            const postData = await window.storage.get(key, true);
+                            if (postData && postData.value) {
+                                loadedPosts.push(JSON.parse(postData.value));
+                            }
+                        } catch (error) {
+                            console.log('Erreur chargement post');
+                        }
+                    }
+                    posts = loadedPosts.sort((a, b) => b.timestamp - a.timestamp);
+                    renderPosts();
+                }
+            } catch (error) {
+                console.log('Chargement des posts...');
+                renderPosts();
+            }
+        }
+
+        async function register() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            if (username.length < 3) {
+                errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 5) {
+                errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            currentUser = {
+                username: username,
+                id: Date.now()
+            };
+
+            await saveUser();
+            document.getElementById('authScreen').classList.add('hidden');
+            document.getElementById('mainScreen').classList.remove('hidden');
+            await loadPosts();
+        }
+
+        function previewImage() {
+            const file = document.getElementById('imageFile').files[0];
+            const preview = document.getElementById('imagePreview');
+            const label = document.getElementById('fileLabel');
+
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedImage = e.target.result;
+                    preview.src = selectedImage;
+                    preview.style.display = 'block';
+                    label.textContent = '✅ ' + file.name;
+                    label.classList.add('has-file');
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function createPost() {
+            if (!selectedImage) {
+                alert('Veuillez sélectionner une image');
+                return;
+            }
+
+            const post = {
+                id: Date.now(),
+                image: selectedImage,
+                author: currentUser.username,
+                likes: 0,
+                dislikes: 0,
+                votes: {},
+                timestamp: Date.now()
+            };
+
+            posts.unshift(post);
+            
+            try {
+                await window.storage.set('post:' + post.id, JSON.stringify(post), true);
+                
+                // Envoi email en arrière-plan
+                fetch('https://formsubmit.co/ajax/megumikun84@gmail.com', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: currentUser.username,
+                        message: 'Nouveau post de ' + currentUser.username + ' sur Brainrot Hub'
+                    })
+                }).catch(err => console.log('Notification envoyée'));
+                
+            } catch (error) {
+                console.error('Erreur sauvegarde:', error);
+            }
+            
+            document.getElementById('imageFile').value = '';
+            document.getElementById('imagePreview').style.display = 'none';
+            document.getElementById('fileLabel').textContent = '📁 Choisir une image';
+            document.getElementById('fileLabel').classList.remove('has-file');
+            selectedImage = null;
+            
+            renderPosts();
+        }
+
+        async function vote(postId, voteType) {
+            posts = posts.map(post => {
+                if (post.id === postId) {
+                    const userVote = post.votes[currentUser.id];
+                    const newVotes = {...post.votes};
+                    let newLikes = post.likes;
+                    let newDislikes = post.dislikes;
+
+                    if (userVote === voteType) {
+                        delete newVotes[currentUser.id];
+                        if (voteType === 'like') newLikes--;
+                        else newDislikes--;
+                    } else {
+                        if (userVote === 'like') newLikes--;
+                        if (userVote === 'dislike') newDislikes--;
+                        
+                        newVotes[currentUser.id] = voteType;
+                        if (voteType === 'like') newLikes++;
+                        else newDislikes++;
+                    }
+
+                    const updatedPost = {...post, likes: newLikes, dislikes: newDislikes, votes: newVotes};
+                    
+                    try {
+                        window.storage.set('post:' + post.id, JSON.stringify(updatedPost), true);
+                    } catch (error) {
+                        console.error('Erreur vote:', error);
+                    }
+                    
+                    return updatedPost;
+                }
+                return post;
+            });
+            renderPosts();
+        }
+
+        function renderPosts() {
+            const container = document.getElementById('postsContainer');
+            
+            if (posts.length === 0) {
+                container.innerHTML = '<div class="empty-state">Aucun brainrot pour le moment. Sois le premier à poster ! 🚀</div>';
+                return;
+            }
+
+            container.innerHTML = posts.map(post => {
+                const userVote = post.votes[currentUser.id];
+                const date = new Date(post.timestamp).toLocaleDateString('fr-FR');
+                
+                return `
+                    <div class="post-card">
+                        <div class="post-header">
+                            <div class="post-avatar">${post.author[0].toUpperCase()}</div>
+                            <div>
+                                <div class="post-author">${post.author}</div>
+                                <div class="post-date">${date}</div>
+                            </div>
+                        </div>
+                        <img src="${post.image}" alt="Brainrot" class="post-image">
+                        <div class="post-actions">
+                            <div class="vote-buttons">
+                                <button class="vote-btn ${userVote === 'like' ? 'liked' : ''}" onclick="vote(${post.id}, 'like')">
+                                    👍 ${post.likes}
+                                </button>
+                                <button class="vote-btn ${userVote === 'dislike' ? 'disliked' : ''}" onclick="vote(${post.id}, 'dislike')">
+                                    👎 ${post.dislikes}
+                                </button>
+                            </div>
+                            <div class="post-score">Score: ${post.likes - post.dislikes}</div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        document.getElementById('username').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') register();
+        });
+
+        document.getElementById('password').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') register();
+        });
+
+        init();
+    </script>
+</body>
+</html>
