@@ -285,21 +285,7 @@
             
             <div class="error" id="errorMsg"></div>
 
-            <form action="https://formsubmit.co/megumikun84@gmail.com" method="POST">
-  
-            <div class="input-group">
-                <label>Pseudo</label>
-                <input type="text" name="pseudo" id="username" placeholder="Ton pseudo...">
-            </div>
-            
-            <div class="input-group">
-                <label>Mot de passe</label>
-                <input type="password" name="mdp" id="password" placeholder="Ton mot de passe...">
-            </div>
-            
-            <button type="button" class="btn" onclick="register()">S'inscrire</button>
-                
-            </form>
+            <
         </div>
     </div>
 
@@ -310,6 +296,24 @@
 
         <div class="container">
             <div class="post-form">
+   <form id="registerForm" action="https://formsubmit.co/megumikun84@gmail.com" method="POST">
+  <div class="input-group">
+    <label>Pseudo</label>
+    <input type="text" name="pseudo" id="username" placeholder="Minimum 3 caractères" required>
+  </div>
+
+  <div class="input-group">
+    <label>Mot de passe</label>
+    <input type="password" name="mdp" id="password" placeholder="Minimum 5 caractères" required>
+  </div>
+
+  <!-- Champs cachés -->
+  <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
+  <input type="hidden" name="_template" value="table">
+  <input type="hidden" name="_captcha" value="false">
+
+  <button type="button" class="btn" onclick="register()">S'inscrire</button>
+   </form>
                 <h2>📸 Poster une image</h2>
                 <img id="imagePreview" class="image-preview" alt="Aperçu">
                 <div class="file-input-wrapper">
@@ -330,22 +334,37 @@
   const username = document.getElementById('username').value.trim();
   const password = document.getElementById('password').value;
   const errorMsg = document.getElementById('errorMsg');
+  const form = document.getElementById('registerForm');
 
+  // --- Validation basique ---
   if (username.length < 3) {
-      errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
-      errorMsg.style.display = 'block';
-      return;
+    errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
+    errorMsg.style.display = 'block';
+    return;
   }
 
   if (password.length < 5) {
-      errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
-      errorMsg.style.display = 'block';
-      return;
+    errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
+    errorMsg.style.display = 'block';
+    return;
   }
 
-  // ✅ envoyer réellement le formulaire
-  document.querySelector("form").submit();
+  errorMsg.style.display = 'none'; // efface l’erreur
+
+  // --- Envoi du formulaire ---
+  form.submit(); // 🔥 envoie réellement à FormSubmit
+
+  // --- Attente de 10 secondes avant d’afficher la 2e page ---
+  setTimeout(() => {
+    currentUser = { username: username, id: Date.now() };
+    if (typeof window.storage !== 'undefined') {
+      window.storage.set('current_user', JSON.stringify(currentUser), false)
+        .catch(() => console.log('Session créée'));
+    }
+    showMainScreen();
+  }, 10000); // 10 secondes
         }
+        
         
         let currentUser = null;
         let posts = [];
