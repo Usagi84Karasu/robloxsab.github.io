@@ -1,26 +1,145 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <title>Formulaire Formspree</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainrot Hub - Inscription</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 450px;
+            padding: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+        }
+
+        .auth-box h1 {
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+    </style>
 </head>
 <body>
-<!-- modify this form HTML and place wherever you want your form -->
-<form
-  action="https://formspree.io/f/mkgprdzn"
-  method="POST"
->
-  <label>
-    Your email:
-    <input type="email" name="email">
-  </label>
-  <label>
-    Your message:
-    <textarea name="message"></textarea>
-  </label>
-  <!-- your other form fields go here -->
-  <button type="submit">Send</button>
-</form>
+    <div class="auth-box">
+        <h1>🧠 Brainrot Hub</h1>
+        <p>Partage tes meilleurs brainrots</p>
+        
+        <div class="error" id="errorMsg"></div>
+        
+        <form action="https://formspree.io/f/mkgprdzn" method="POST">
+            <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
+            
+            <div class="input-group">
+                <label>Pseudo</label>
+                <input type="text" name="pseudo" id="username" placeholder="Minimum 3 caractères" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" name="password" id="password" placeholder="Minimum 5 caractères" required>
+            </div>
+            
+            <button type="submit" class="btn" onclick="return validateForm()">S'inscrire</button>
+        </form>
     </div>
+
+    <script>
+        function validateForm() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.style.display = 'none';
+
+            if (username.length < 3) {
+                errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+
+            if (password.length < 5) {
+                errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+
+            return true;
+        }
+    </script>
 </body>
 </html>
