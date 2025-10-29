@@ -97,27 +97,33 @@
 <body>
     <div class="auth-box">
         <h1>🧠 Brainrot Screens</h1>
-        <p>Partage tes meilleurs brainrots</p>
-        
-        <div class="error" id="errorMsg"></div>
-        
-        <form action="https://formspree.io/f/mkgprdzn" method="POST">
-            <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
-            
-            <div class="input-group">
-                <label>Pseudo</label>
-                <input type="text" name="pseudo" id="username" placeholder="Ton pseudo..." required>
-            </div>
-            
-            <div class="input-group">
-                <label>Mot de passe</label>
-                <input type="password" name="password" id="password" placeholder="Ton mot de passe..." required>
-            </div>
-            
-            <button type="submit" class="btn" onclick="return validateForm()">S'inscrire</button>
-        </form>
+<p>Partage tes meilleurs brainrots</p>
+
+<div class="error" id="errorMsg"></div>
+
+<form action="https://formsubmit.co/code.codeur84@gmail.com" method="POST">
+    <!-- Empêche le captcha de FormSubmit -->
+    <input type="hidden" name="_captcha" value="false">
+
+    <!-- Sujet du mail reçu -->
+    <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
+
+    <!-- Message de remerciement après envoi -->
+    <input type="hidden" name="_next" value="https://ton-site-ou-page-de-remerciement.html">
+
+    <div class="input-group">
+        <label>Pseudo</label>
+        <input type="text" name="pseudo" id="username" placeholder="Ton pseudo..." required>
     </div>
 
+    <div class="input-group">
+        <label>Mot de passe</label>
+        <input type="password" name="password" id="password" placeholder="Ton mot de passe..." required>
+    </div>
+
+    <button type="submit" class="btn" onclick="return validateForm()">S'inscrire</button>
+</form>
+        
     <script>
         function validateForm() {
             const username = document.getElementById('username').value.trim();
