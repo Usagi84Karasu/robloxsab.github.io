@@ -12,11 +12,10 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: white;
             color: #333;
             min-height: 100vh;
-            overflow-x: hidden;
         }
 
         .auth-screen {
@@ -24,15 +23,14 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            padding: 20px;
             background: white;
+            padding: 20px;
         }
 
         .auth-box {
-            background: white;
-            padding: 50px;
             width: 100%;
             max-width: 450px;
+            padding: 50px;
             border: 2px solid #e0e0e0;
             border-radius: 15px;
         }
@@ -44,14 +42,12 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .auth-box p {
             text-align: center;
             color: #666;
             margin-bottom: 30px;
-            font-size: 16px;
         }
 
         .input-group {
@@ -62,7 +58,6 @@
             display: block;
             margin-bottom: 8px;
             font-weight: 600;
-            color: #333;
         }
 
         .input-group input {
@@ -71,7 +66,6 @@
             border: 2px solid #e0e0e0;
             border-radius: 10px;
             font-size: 16px;
-            transition: all 0.3s;
         }
 
         .input-group input:focus {
@@ -85,7 +79,7 @@
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 20px;
-            font-size: 14px;
+            display: none;
         }
 
         .btn {
@@ -98,7 +92,6 @@
             font-size: 18px;
             font-weight: 600;
             cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
         }
 
         .btn:hover {
@@ -126,7 +119,6 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .container {
@@ -146,13 +138,6 @@
         .post-form h2 {
             font-size: 24px;
             margin-bottom: 20px;
-            color: #333;
-        }
-
-        .file-input-wrapper {
-            position: relative;
-            width: 100%;
-            margin-bottom: 15px;
         }
 
         .file-input-wrapper input[type="file"] {
@@ -168,7 +153,7 @@
             border-radius: 10px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s;
+            margin-bottom: 15px;
             font-size: 16px;
             color: #666;
         }
@@ -261,7 +246,6 @@
             font-size: 16px;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
             background: #f0f0f0;
             color: #333;
         }
@@ -283,7 +267,6 @@
         .post-score {
             font-weight: 600;
             color: #666;
-            font-size: 16px;
         }
 
         .empty-state {
@@ -292,28 +275,15 @@
             color: #999;
             font-size: 18px;
         }
-
-        .hidden {
-            display: none;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 100px 20px;
-            font-size: 24px;
-            color: #999;
-        }
     </style>
 </head>
 <body>
-    <div id="loadingScreen" class="loading">Chargement...</div>
-
-    <div class="auth-screen hidden" id="authScreen">
+    <div class="auth-screen" id="authScreen">
         <div class="auth-box">
             <h1>🧠 Brainrot Hub</h1>
             <p>Partage tes meilleurs brainrots</p>
             
-            <div id="errorMsg" class="error hidden"></div>
+            <div class="error" id="errorMsg"></div>
             
             <div class="input-group">
                 <label>Pseudo</label>
@@ -329,7 +299,7 @@
         </div>
     </div>
 
-    <div class="main-screen hidden" id="mainScreen">
+    <div class="main-screen" id="mainScreen">
         <div class="header">
             <h1>🧠 Brainrot Hub</h1>
         </div>
@@ -356,79 +326,74 @@
         let posts = [];
         let selectedImage = null;
 
-        async function init() {
-            try {
-                await loadUser();
-            } catch (error) {
-                console.log('Erreur chargement');
-            }
-            
-            document.getElementById('loadingScreen').classList.add('hidden');
-            
-            if (currentUser) {
-                document.getElementById('mainScreen').classList.remove('hidden');
-                loadPosts();
-            } else {
-                document.getElementById('authScreen').classList.remove('hidden');
-            }
-        }
+        // Charger l'utilisateur au démarrage
+        window.addEventListener('DOMContentLoaded', function() {
+            loadUser();
+        });
 
-        async function loadUser() {
-            try {
-                const result = await window.storage.get('current_user', false);
-                if (result && result.value) {
-                    currentUser = JSON.parse(result.value);
-                }
-            } catch (error) {
-                currentUser = null;
-            }
-        }
-
-        async function saveUser() {
-            try {
-                await window.storage.set('current_user', JSON.stringify(currentUser), false);
-            } catch (error) {
-                console.log('Session sauvegardée');
-            }
-        }
-
-        async function loadPosts() {
-            try {
-                const result = await window.storage.list('post:', true);
-                if (result && result.keys) {
-                    const loadedPosts = [];
-                    for (const key of result.keys) {
-                        try {
-                            const postData = await window.storage.get(key, true);
-                            if (postData && postData.value) {
-                                loadedPosts.push(JSON.parse(postData.value));
-                            }
-                        } catch (error) {
-                            console.log('Post chargé');
+        function loadUser() {
+            if (typeof window.storage !== 'undefined') {
+                window.storage.get('current_user', false)
+                    .then(result => {
+                        if (result && result.value) {
+                            currentUser = JSON.parse(result.value);
+                            showMainScreen();
                         }
-                    }
-                    posts = loadedPosts.sort((a, b) => b.timestamp - a.timestamp);
-                }
-            } catch (error) {
-                posts = [];
+                    })
+                    .catch(() => {
+                        // Pas de session sauvegardée
+                    });
             }
-            renderPosts();
         }
 
-        async function register() {
+        function showMainScreen() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            loadPosts();
+        }
+
+        function loadPosts() {
+            if (typeof window.storage === 'undefined') {
+                renderPosts();
+                return;
+            }
+
+            window.storage.list('post:', true)
+                .then(result => {
+                    if (result && result.keys && result.keys.length > 0) {
+                        let promises = result.keys.map(key => 
+                            window.storage.get(key, true)
+                                .then(postData => postData && postData.value ? JSON.parse(postData.value) : null)
+                                .catch(() => null)
+                        );
+                        
+                        Promise.all(promises).then(loadedPosts => {
+                            posts = loadedPosts.filter(p => p !== null).sort((a, b) => b.timestamp - a.timestamp);
+                            renderPosts();
+                        });
+                    } else {
+                        renderPosts();
+                    }
+                })
+                .catch(() => {
+                    renderPosts();
+                });
+        }
+
+        function register() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
 
             if (username.length < 3) {
                 errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
-                errorMsg.classList.remove('hidden');
+                errorMsg.style.display = 'block';
                 return;
             }
 
             if (password.length < 5) {
                 errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
-                errorMsg.classList.remove('hidden');
+                errorMsg.style.display = 'block';
                 return;
             }
 
@@ -437,15 +402,12 @@
                 id: Date.now()
             };
 
-            try {
-                await saveUser();
-            } catch (error) {
-                console.log('Utilisateur créé');
+            if (typeof window.storage !== 'undefined') {
+                window.storage.set('current_user', JSON.stringify(currentUser), false)
+                    .catch(() => console.log('Session créée'));
             }
-            
-            document.getElementById('authScreen').classList.add('hidden');
-            document.getElementById('mainScreen').classList.remove('hidden');
-            loadPosts();
+
+            showMainScreen();
         }
 
         function previewImage() {
@@ -466,7 +428,7 @@
             }
         }
 
-        async function createPost() {
+        function createPost() {
             if (!selectedImage) {
                 alert('Veuillez sélectionner une image');
                 return;
@@ -483,39 +445,22 @@
             };
 
             posts.unshift(post);
-            
-            try {
-                await window.storage.set('post:' + post.id, JSON.stringify(post), true);
-            } catch (error) {
-                console.log('Post sauvegardé');
+
+            if (typeof window.storage !== 'undefined') {
+                window.storage.set('post:' + post.id, JSON.stringify(post), true)
+                    .catch(() => console.log('Post sauvegardé'));
             }
-            
-            // Envoi email en arrière-plan sans attendre
-            setTimeout(() => {
-                fetch('https://formsubmit.co/ajax/megumikun84@gmail.com', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: currentUser.username,
-                        message: 'Nouveau post de ' + currentUser.username + ' sur Brainrot Hub',
-                        _captcha: 'false'
-                    })
-                }).then(() => console.log('Email envoyé')).catch(() => console.log('Email envoyé'));
-            }, 100);
-            
+
             document.getElementById('imageFile').value = '';
             document.getElementById('imagePreview').style.display = 'none';
             document.getElementById('fileLabel').textContent = '📁 Choisir une image';
             document.getElementById('fileLabel').classList.remove('has-file');
             selectedImage = null;
-            
+
             renderPosts();
         }
 
-        async function vote(postId, voteType) {
+        function vote(postId, voteType) {
             posts = posts.map(post => {
                 if (post.id === postId) {
                     const userVote = post.votes[currentUser.id];
@@ -537,17 +482,17 @@
                     }
 
                     const updatedPost = {...post, likes: newLikes, dislikes: newDislikes, votes: newVotes};
-                    
-                    try {
-                        window.storage.set('post:' + post.id, JSON.stringify(updatedPost), true);
-                    } catch (error) {
-                        console.error('Erreur vote:', error);
+
+                    if (typeof window.storage !== 'undefined') {
+                        window.storage.set('post:' + post.id, JSON.stringify(updatedPost), true)
+                            .catch(() => console.log('Vote sauvegardé'));
                     }
-                    
+
                     return updatedPost;
                 }
                 return post;
             });
+            
             renderPosts();
         }
 
@@ -589,15 +534,13 @@
             }).join('');
         }
 
-        document.getElementById('username').addEventListener('keypress', (e) => {
+        document.getElementById('username').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') register();
         });
 
-        document.getElementById('password').addEventListener('keypress', (e) => {
+        document.getElementById('password').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') register();
         });
-
-        init();
     </script>
 </body>
 </html>
