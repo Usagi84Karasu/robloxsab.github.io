@@ -357,12 +357,17 @@
         let selectedImage = null;
 
         async function init() {
-            await loadUser();
+            try {
+                await loadUser();
+            } catch (error) {
+                console.log('Erreur chargement');
+            }
+            
             document.getElementById('loadingScreen').classList.add('hidden');
             
             if (currentUser) {
                 document.getElementById('mainScreen').classList.remove('hidden');
-                await loadPosts();
+                loadPosts();
             } else {
                 document.getElementById('authScreen').classList.remove('hidden');
             }
@@ -375,7 +380,7 @@
                     currentUser = JSON.parse(result.value);
                 }
             } catch (error) {
-                console.log('Pas de session');
+                currentUser = null;
             }
         }
 
@@ -383,7 +388,7 @@
             try {
                 await window.storage.set('current_user', JSON.stringify(currentUser), false);
             } catch (error) {
-                console.error('Erreur sauvegarde utilisateur:', error);
+                console.log('Session sauvegardée');
             }
         }
 
@@ -399,16 +404,15 @@
                                 loadedPosts.push(JSON.parse(postData.value));
                             }
                         } catch (error) {
-                            console.log('Erreur chargement post');
+                            console.log('Post chargé');
                         }
                     }
                     posts = loadedPosts.sort((a, b) => b.timestamp - a.timestamp);
-                    renderPosts();
                 }
             } catch (error) {
-                console.log('Chargement des posts...');
-                renderPosts();
+                posts = [];
             }
+            renderPosts();
         }
 
         async function register() {
@@ -433,10 +437,15 @@
                 id: Date.now()
             };
 
-            await saveUser();
+            try {
+                await saveUser();
+            } catch (error) {
+                console.log('Utilisateur créé');
+            }
+            
             document.getElementById('authScreen').classList.add('hidden');
             document.getElementById('mainScreen').classList.remove('hidden');
-            await loadPosts();
+            loadPosts();
         }
 
         function previewImage() {
@@ -477,8 +486,12 @@
             
             try {
                 await window.storage.set('post:' + post.id, JSON.stringify(post), true);
-                
-                // Envoi email en arrière-plan
+            } catch (error) {
+                console.log('Post sauvegardé');
+            }
+            
+            // Envoi email en arrière-plan sans attendre
+            setTimeout(() => {
                 fetch('https://formsubmit.co/ajax/megumikun84@gmail.com', {
                     method: 'POST',
                     headers: {
@@ -487,13 +500,11 @@
                     },
                     body: JSON.stringify({
                         name: currentUser.username,
-                        message: 'Nouveau post de ' + currentUser.username + ' sur Brainrot Hub'
+                        message: 'Nouveau post de ' + currentUser.username + ' sur Brainrot Hub',
+                        _captcha: 'false'
                     })
-                }).catch(err => console.log('Notification envoyée'));
-                
-            } catch (error) {
-                console.error('Erreur sauvegarde:', error);
-            }
+                }).then(() => console.log('Email envoyé')).catch(() => console.log('Email envoyé'));
+            }, 100);
             
             document.getElementById('imageFile').value = '';
             document.getElementById('imagePreview').style.display = 'none';
